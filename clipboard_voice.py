@@ -33,19 +33,25 @@ WAVE_FILENAME_2 = 'tts2.wav'
 WAV_FILE = WAV_PATH / WAVE_FILENAME_1
 IS_FIRST_WAV = True
 CHECK_CLIPBOARD = True
+CLIPBOARD_AUTO_PLAY = True
 
 japanese_text_found_callback = None
 
 
-def speak_jp(sentence):
+def speak_jp(sentence, play_new_voice=True):
     global WAV_FILE
     global last_voice_id
-
-    last_voice_id = VOICE_ID
 
     # Callback to report found jp if exists
     if japanese_text_found_callback != None:
         japanese_text_found_callback(sentence)
+
+    # Dont generate voice, only update ui with callback
+    if play_new_voice == False:
+        print('skip playing voice')
+        return
+
+    last_voice_id = VOICE_ID
 
     # generate initial query data
     params_encoded = urlencode({'text': sentence, 'speaker': VOICE_ID})
@@ -117,7 +123,9 @@ def check_new_text_and_play_voice(not_from_clipboard = False, sentence = None):
 
     if changed:
         print('New text: ' + current_text)
+        auto_play_voice = CLIPBOARD_AUTO_PLAY
         if not_from_clipboard:
+            auto_play_voice = True
             if CHECK_CLIPBOARD:
                 pyperclip.copy(sentence) # so it does not trigger check clipboard
             current_text = sentence
@@ -127,7 +135,7 @@ def check_new_text_and_play_voice(not_from_clipboard = False, sentence = None):
         is_japanese = check_if_japanese(current_text)
         if is_japanese:
             print("New Japanese text: ", current_text)
-            speak_jp(current_text)
+            speak_jp(current_text, auto_play_voice)
     elif not_from_clipboard:
         # Replay last voice if from UI
         print("Replaying voice if the same")

@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from threading import Thread
 
+import keyboard
 import clipboard_voice
 
 VOICES_DATA = {}
@@ -14,7 +15,7 @@ def create_speakers_json():
     with open('speakers.json', 'w+', encoding='utf-8') as f:
         data = r.json()
         f.write(json.dumps(data, indent=2, ensure_ascii=False))
-    
+
     return data
 
 def get_options():
@@ -41,6 +42,7 @@ class MainVoiceWindow():
     selected_voice_id = 2
     selected_data = None
     clipboard_copy = None
+    clipboard_play = None
 
     label_str = None
 
@@ -77,6 +79,11 @@ class MainVoiceWindow():
         check_box = tk.Checkbutton(self.window, text="Clipboard copy", variable=self.clipboard_copy, command=self.check_callback)
         check_box.pack()
 
+        self.clipboard_play = tk.BooleanVar()
+        self.clipboard_play.set(True)
+        check_box = tk.Checkbutton(self.window, text="Auto play", variable=self.clipboard_play, command=self.check_callback_play)
+        check_box.pack()
+
         # Label
         # Create a label above the combobox and text widget
         self.label_str = tk.StringVar()
@@ -96,6 +103,10 @@ class MainVoiceWindow():
         self.thread = Thread(target=clipboard_voice.run_clipboard_voice)
         self.thread.start()
 
+        # Shortcuts
+
+        keyboard.add_hotkey('win+z', self.create_voice_from_text)
+
 
         # Start the tkinter event loop
         self.window.protocol("WM_DELETE_WINDOW", self.on_exit)
@@ -109,7 +120,11 @@ class MainVoiceWindow():
 
     def check_callback(self):
         clipboard_voice.CHECK_CLIPBOARD = self.clipboard_copy.get()
-        print("Check box state:", self.clipboard_copy.get())
+        print("Check box clip:", self.clipboard_copy.get())
+
+    def check_callback_play(self):
+        clipboard_voice.CLIPBOARD_AUTO_PLAY = self.clipboard_play.get()
+        print("Check box play:", self.clipboard_play.get())
 
     def create_voice_from_text(self):
         sentence = self.text_widget.get('1.0', tk.END)
@@ -168,5 +183,6 @@ class MainVoiceWindow():
 # Main
 if __name__ == '__main__':
     print("Starting...")
+    print("win+z to play voice. (button hotkey)")
     #create_tkinter_window()
     MainVoiceWindow()
