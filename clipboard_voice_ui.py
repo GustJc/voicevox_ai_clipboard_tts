@@ -106,6 +106,7 @@ class MainVoiceWindow():
         # Shortcuts
 
         keyboard.add_hotkey('win+z', self.create_voice_from_text)
+        keyboard.add_hotkey('win+c', self.switch_auto_play)
 
 
         # Start the tkinter event loop
@@ -125,6 +126,10 @@ class MainVoiceWindow():
     def check_callback_play(self):
         clipboard_voice.CLIPBOARD_AUTO_PLAY = self.clipboard_play.get()
         print("Check box play:", self.clipboard_play.get())
+
+    def switch_auto_play(self):
+        self.clipboard_play.set(not self.clipboard_play.get())
+        self.check_callback_play()
 
     def create_voice_from_text(self):
         sentence = self.text_widget.get('1.0', tk.END)
@@ -184,5 +189,6 @@ class MainVoiceWindow():
 if __name__ == '__main__':
     print("Starting...")
     print("win+z to play voice. (button hotkey)")
+    print("win+c to switch auto-play checkbox")
     #create_tkinter_window()
     MainVoiceWindow()
