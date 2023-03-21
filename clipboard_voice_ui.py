@@ -40,6 +40,7 @@ class MainVoiceWindow():
     text_widget = None
     selected_voice_id = 2
     selected_data = None
+    clipboard_copy = None
 
     label_str = None
 
@@ -53,6 +54,7 @@ class MainVoiceWindow():
 
         # Create a list of options for the combobox
         options = get_options()
+
         # Create a ttk Combobox widget and set its values
         self.combo_box = ttk.Combobox(self.window, values=options, state='readonly')
         self.combo_box.set('Select an option')
@@ -68,6 +70,13 @@ class MainVoiceWindow():
 
         self.on_voice_selected(0)
 
+        # check
+        self.clipboard_copy = tk.BooleanVar()
+        self.clipboard_copy.set(True)
+        # Create the check box widget and associate it with the check_var variable and check_callback function
+        check_box = tk.Checkbutton(self.window, text="Clipboard copy", variable=self.clipboard_copy, command=self.check_callback)
+        check_box.pack()
+
         # Label
         # Create a label above the combobox and text widget
         self.label_str = tk.StringVar()
@@ -75,13 +84,18 @@ class MainVoiceWindow():
         label = tk.Label(self.window, textvariable=self.label_str)
         label.pack()
 
+        # Create a button widget
+        self.button = tk.Button(self.window, text="Play voice!", command=self.create_voice_from_text)
+        self.button.pack(side=tk.RIGHT)
+
         # Text
         # Create a text widget to display the selected option
-        self.text_widget = tk.Text(self.window, height=2, state='disabled')
-        self.text_widget.pack()
+        self.text_widget = tk.Text(self.window, height=2, state='normal')
+        self.text_widget.pack(fill=tk.BOTH, expand=True)
 
         self.thread = Thread(target=clipboard_voice.run_clipboard_voice)
         self.thread.start()
+
 
         # Start the tkinter event loop
         self.window.protocol("WM_DELETE_WINDOW", self.on_exit)
@@ -92,6 +106,15 @@ class MainVoiceWindow():
 
         self.window.destroy()
         print('Exiting...')
+
+    def check_callback(self):
+        clipboard_voice.CHECK_CLIPBOARD = self.clipboard_copy.get()
+        print("Check box state:", self.clipboard_copy.get())
+
+    def create_voice_from_text(self):
+        sentence = self.text_widget.get('1.0', tk.END)
+        print('Sending: ' + sentence)
+        clipboard_voice.check_new_text_and_play_voice(True, sentence)
 
 
     def on_voice_selected(self, event):
@@ -119,6 +142,7 @@ class MainVoiceWindow():
         self.combo_box_2.current(0)
 
         self.selected_voice_id = self.selected_data[0]['id']
+        clipboard_voice.VOICE_ID = int(self.selected_voice_id)
         print('Selected id: ' + str(self.selected_voice_id))
 
     def update_voice_id_selected(self):
@@ -133,11 +157,11 @@ class MainVoiceWindow():
         clipboard_voice.VOICE_ID = int(self.selected_voice_id)
 
     def update_text_widget(self, text):
-        print('Callback executed')
+        print('Updated text widget')
         self.text_widget.config(state='normal')
         self.text_widget.delete('1.0', tk.END)
         self.text_widget.insert(tk.END, text)
-        self.text_widget.config(state='disabled')
+        #self.text_widget.config(state='disabled')
 
 
 

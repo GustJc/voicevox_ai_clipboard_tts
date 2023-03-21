@@ -32,12 +32,16 @@ WAVE_FILENAME_1 = 'tts1.wav'
 WAVE_FILENAME_2 = 'tts2.wav'
 WAV_FILE = WAV_PATH / WAVE_FILENAME_1
 IS_FIRST_WAV = True
+CHECK_CLIPBOARD = True
 
 japanese_text_found_callback = None
 
 
 def speak_jp(sentence):
     global WAV_FILE
+    global last_voice_id
+
+    last_voice_id = VOICE_ID
 
     # Callback to report found jp if exists
     if japanese_text_found_callback != None:
@@ -85,28 +89,50 @@ def play_voice():
     data, fs = sf.read(WAV_FILE, dtype='float32')
     sd.stop()
     sd.play(data, fs)
-    # try:
-    #     sd.wait()
-    # except KeyboardInterrupt:
-    #     print("Stopped")
-    #     sd.stop()
 
 
+current_text = ''
+previous_text = ''
+last_voice_id = VOICE_ID
 def check_clipboard():
+    global current_text
+    global previous_text
     global EXIT_PROGRAM
-    current_text = ''
-    previous_text = ''
     while EXIT_PROGRAM == False:
-        current_text = pyperclip.paste()
-        if current_text != previous_text:
-            print('New text: ' + current_text)
-            previous_text = current_text
-            # Check if the new text is Japanese
-            is_japanese = check_if_japanese(current_text)
-            if is_japanese:
-                print("New Japanese text copied to clipboard: ", current_text)
-                speak_jp(current_text)
+        if CHECK_CLIPBOARD == True:
+            current_text = pyperclip.paste()
+            check_new_text_and_play_voice()
         time.sleep(0.1)
+
+def check_new_text_and_play_voice(not_from_clipboard = False, sentence = None):
+    global current_text
+    global previous_text
+    global last_voice_id
+
+    changed = current_text != previous_text
+    if not_from_clipboard:
+        changed = sentence != previous_text
+    if last_voice_id != VOICE_ID:
+        changed = True
+
+    if changed:
+        print('New text: ' + current_text)
+        if not_from_clipboard:
+            if CHECK_CLIPBOARD:
+                pyperclip.copy(sentence) # so it does not trigger check clipboard
+            current_text = sentence
+
+        previous_text = current_text
+        # Check if the new text is Japanese
+        is_japanese = check_if_japanese(current_text)
+        if is_japanese:
+            print("New Japanese text: ", current_text)
+            speak_jp(current_text)
+    elif not_from_clipboard:
+        # Replay last voice if from UI
+        print("Replaying voice if the same")
+        play_voice()
+
 
 def check_if_japanese(sentence):
     try:
